@@ -6,15 +6,11 @@ email: mathilde.perez@irb.usi.ch
 
 ### SUMMARY ###
 
-We have made available here a series of scripts to analyze the Switch region (IGH locus)
+We have made available here a series of scripts to analyze the Switch region (IGH locus) and find potential DNA insertions.
 
-and find potential DNA insertions. The scripts are primarily intended as reference for manuscript
+The scripts are primarily intended as reference for manuscript REF_TO_PUT_HERE rather than a stand-alone application.
 
-REF_TO_PUT_HERE rather than a stand-alone application.
-
-The input of the pipeline is 300 bp paired-end reads coming from a target amplicon
-
-of the switch region. Data can be found at SRA_REF_TO_PUT_HERE accession number.
+The input of the pipeline is 300 bp paired-end reads coming from a target amplicon of the switch region. Data can be found at SRA_REF_TO_PUT_HERE accession number.
 
 These scripts were run on Linux machines.
 
@@ -34,7 +30,7 @@ b) Pysam https://github.com/pysam-developers/pysam
 
 c) Java JDK 8 https://docs.oracle.com/javase/8/docs/technotes/guides/install/install_overview.html#A1097144
 
-d) FastQc and Trim Galore! http://www.bioinformatics.babraham.ac.uk/projects/index.html
+d) FastQC and Trim Galore! http://www.bioinformatics.babraham.ac.uk/projects/index.html
 
 e) Burrows-Wheeler Aligner http://bio-bwa.sourceforge.net/
 
@@ -57,13 +53,12 @@ First we create a directory for each donor ($DONOR) and move in the raw fastq fi
 
         $ mkdir CleaningWithTrimGalore
 
-        $ trim_galore --illumina --paired -q 20 --length 99 --output_dir
-        CleaningWithTrimGalore/ raw_1.fastq raw_2.fastq
+        $ trim_galore --illumina --paired -q 20 --length 99 --output_dir CleaningWithTrimGalore/ raw_1.fastq raw_2.fastq
+
 
 2. Align the reads to the human genome hg19 (allowing soft-clipped reads)
 
-        $ bwa mem -t 10 /pathToHg19/hg19.fasta CleaningWithTrimGalore/*_val_1.fq
-        CleaningWithTrimGalore/*_val_2.fq | samtools view -bSu - > $DONOR.notSorted.bam
+        $ bwa mem -t 10 /pathToHg19/hg19.fasta CleaningWithTrimGalore/*_val_1.fq CleaningWithTrimGalore/*_val_2.fq | samtools view -bSu - > $DONOR.notSorted.bam
 
         $ samtools sort $DONOR.notSorted.bam $DONOR
 
@@ -72,45 +67,44 @@ First we create a directory for each donor ($DONOR) and move in the raw fastq fi
         $ samtools index $DONOR.bam
         $ samtools flagstat $DONOR.bam
 
+
 3. Get the "over covered" regions
 
         $ bedtools genomecov -dz -ibam $DONOR.bam > $DONOR_depth_v4_bedtools.txt
 
+
 4. Identify potential inserts among those over covered regions
 
-   a. We filter in the regions mapped by minimum 2 reads/bp and mini length =50bp
+    *  We filter in the regions mapped by minimum 2 reads/bp and mini length =50bp
 
-        $ java -jar /pathToSwitchIlluminaScripts/FindOverCoverRegion.jar $DONOR 2 50
+             $ java -jar /pathToSwitchIlluminaScripts/FindOverCoverRegion.jar $DONOR 2 50
 
-    We keep insert with chimeric reads in 3' and 5' with Switch region and at least 2 mates map in Switch region
+         We keep insert with chimeric reads in 3' and 5' with Switch region and at least 2 mates map in Switch region
 
-    We discard regions >= 2000 bps (probably non specific PCR product) and we process only read where map quality >= 5
+         We discard regions >= 2000 bps (probably non specific PCR product) and we process only read where map quality >= 5  and not have XA tag (multi mapping reads)
 
-    and not have XA tag (multi mapping reads)
-
-        $ python /pathToSwitchIlluminaScripts/ValidateInserts.py $DONOR.bam $DONOR 2
+             $ python /pathToSwitchIlluminaScripts/ValidateInserts.py $DONOR.bam $DONOR 2
 
 
+    * We filter in the regions mapped by minimum 40 reads/bp and mini length =50bp
 
-   b.We filter in the regions mapped by minimum 40 reads/bp and mini length =50bp
+             $ java -jar /pathToSwitchIlluminaScripts/FindOverCoverRegion.jar $DONOR 40 50
 
-        $ java -jar /pathToSwitchIlluminaScripts/FindOverCoverRegion.jar $DONOR 40 50
+         We keep insert with chimeric reads in 3' and 5' with Switch region and at least 2 mates map in Switch region
 
-   We keep insert with chimeric reads in 3' and 5' with Switch region and at least 2 mates map in Switch region
+         We discard regions >= 2000 bps (probably non specific PCR product) and we process only read where map quality >= 5  and not have XA tag (multi mapping reads)
 
-   We discard regions >= 2000 bps (probably non specific PCR product) and we process only read where map quality >= 5
+             $ python /pathToSwitchIlluminaScripts/ValidateInserts.py $DONOR.bam $DONOR 40
 
-   and not have XA tag (multi mapping reads)
-
-        $ python /pathToSwitchIlluminaScripts/ValidateInserts.py $DONOR.bam $DONOR 40
 
 
 5. We merge the insert coordinates found with minimum 2 reads/bp coverage and minimum 40 reads/bp coverage.
 
-   If two insert coordinates overlap and the distance between the two is equal or below 10 bp we keep the shortest insert,
-   else we keep the longest one.
+      If two insert coordinates overlap and the distance between the two is equal or below 10 bp we keep the shortest insert,
+      else we keep the longest one.
 
         $ java -jar /pathToSwitchIlluminaScripts/Merge2Beds.jar $DONOR selectedInsert_$DONOR_2reads.bed selectedInsert_$DONOR_40reads.bed
+
 
 6. We sort the merged file
 
@@ -118,8 +112,7 @@ First we create a directory for each donor ($DONOR) and move in the raw fastq fi
 
 7. We map the annotation to our inserts
 
-        $ bedmap --echo --echo-map-id-uniq --delim '\t' selectedInsert_$DONOR_merged_sorted.bed /pathToSwitchIlluminaScripts/gencode.v19.annotation.exon.gene_shortedV2.bed >
-        selectedInsert_$DONOR_Annotated.bed
+        $ bedmap --echo --echo-map-id-uniq --delim '\t' selectedInsert_$DONOR_merged_sorted.bed /pathToSwitchIlluminaScripts/gencode.v19.annotation.exon.gene_shortedV2.bed > selectedInsert_$DONOR_Annotated.bed
 
 8. We sort the final file:
 
@@ -146,11 +139,7 @@ First we create a directory for each donor ($DONOR) and move in the raw fastq fi
 
 11. We finally check that we have nice contig for each insert, otherwise we remove them
 
-    First we launch a blast for each insert against the switch region to discard the insert sequences
-
-    that are homologous with the switch region, and then a blast for each contig against its insert and
-
-    the switch region to keep only the contig that are Switch/Insert/Switch.
+    First we launch a blast for each insert against the switch region to discard the insert sequences that are homologous with the switch region, and then a blast for each contig against its insert and the switch region to keep only the contig that are Switch/Insert/Switch.
 
         $ /pathToSwitchIlluminaScripts/AfterTrinitySelectInsert.sh $DONOR
 

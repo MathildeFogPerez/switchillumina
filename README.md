@@ -10,9 +10,7 @@ We have made available here a series of scripts to analyze the Switch region (IG
 
 The scripts are primarily intended as reference for manuscript REF_TO_PUT_HERE rather than a stand-alone application.
 
-The input of the pipeline is 300 bp paired-end reads coming from a target amplicon
-
-of the switch region. Data can be found at SRA_REF_TO_PUT_HERE accession number.
+The input of the pipeline is 300 bp paired-end reads coming from a target amplicon of the switch region. Data can be found at SRA_REF_TO_PUT_HERE accession number.
 
 These scripts were run on Linux machines.
 

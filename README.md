@@ -58,6 +58,7 @@ First we create a directory for each donor ($DONOR) and move in the raw fastq fi
         $ trim_galore --illumina --paired -q 20 --length 99 --output_dir
         CleaningWithTrimGalore/ raw_1.fastq raw_2.fastq
 
+
 2. Align the reads to the human genome hg19 (allowing soft-clipped reads)
 
         $ bwa mem -t 10 /pathToHg19/hg19.fasta CleaningWithTrimGalore/*_val_1.fq
@@ -70,45 +71,44 @@ First we create a directory for each donor ($DONOR) and move in the raw fastq fi
         $ samtools index $DONOR.bam
         $ samtools flagstat $DONOR.bam
 
+
 3. Get the "over covered" regions
 
         $ bedtools genomecov -dz -ibam $DONOR.bam > $DONOR_depth_v4_bedtools.txt
 
+
 4. Identify potential inserts among those over covered regions
 
-   a. We filter in the regions mapped by minimum 2 reads/bp and mini length =50bp
+    *  We filter in the regions mapped by minimum 2 reads/bp and mini length =50bp
 
-        $ java -jar /pathToSwitchIlluminaScripts/FindOverCoverRegion.jar $DONOR 2 50
+             $ java -jar /pathToSwitchIlluminaScripts/FindOverCoverRegion.jar $DONOR 2 50
 
-We keep insert with chimeric reads in 3' and 5' with Switch region and at least 2 mates map in Switch region
+         We keep insert with chimeric reads in 3' and 5' with Switch region and at least 2 mates map in Switch region
 
-We discard regions >= 2000 bps (probably non specific PCR product) and we process only read where map quality >= 5
+         We discard regions >= 2000 bps (probably non specific PCR product) and we process only read where map quality >= 5  and not have XA tag (multi mapping reads)
 
-and not have XA tag (multi mapping reads)
-
-        $ python /pathToSwitchIlluminaScripts/ValidateInserts.py $DONOR.bam $DONOR 2
+             $ python /pathToSwitchIlluminaScripts/ValidateInserts.py $DONOR.bam $DONOR 2
 
 
+    * We filter in the regions mapped by minimum 40 reads/bp and mini length =50bp
 
-   b. We filter in the regions mapped by minimum 40 reads/bp and mini length =50bp
+             $ java -jar /pathToSwitchIlluminaScripts/FindOverCoverRegion.jar $DONOR 40 50
 
-        $ java -jar /pathToSwitchIlluminaScripts/FindOverCoverRegion.jar $DONOR 40 50
+         We keep insert with chimeric reads in 3' and 5' with Switch region and at least 2 mates map in Switch region
 
-We keep insert with chimeric reads in 3' and 5' with Switch region and at least 2 mates map in Switch region
+         We discard regions >= 2000 bps (probably non specific PCR product) and we process only read where map quality >= 5  and not have XA tag (multi mapping reads)
 
-We discard regions >= 2000 bps (probably non specific PCR product) and we process only read where map quality >= 5
+             $ python /pathToSwitchIlluminaScripts/ValidateInserts.py $DONOR.bam $DONOR 40
 
-and not have XA tag (multi mapping reads)
-
-        $ python /pathToSwitchIlluminaScripts/ValidateInserts.py $DONOR.bam $DONOR 40
 
 
 5. We merge the insert coordinates found with minimum 2 reads/bp coverage and minimum 40 reads/bp coverage.
 
-   If two insert coordinates overlap and the distance between the two is equal or below 10 bp we keep the shortest insert,
-   else we keep the longest one.
+      If two insert coordinates overlap and the distance between the two is equal or below 10 bp we keep the shortest insert,
+      else we keep the longest one.
 
         $ java -jar /pathToSwitchIlluminaScripts/Merge2Beds.jar $DONOR selectedInsert_$DONOR_2reads.bed selectedInsert_$DONOR_40reads.bed
+
 
 6. We sort the merged file
 

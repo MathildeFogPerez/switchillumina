@@ -6,7 +6,7 @@ email: mathilde.perez@irb.usi.ch
 
 ### SUMMARY ###
 
-We have made available here a series of scripts to analyze the Switch region (IGH locus) and find potential DNA insertions.
+We have made available here a series of scripts to analyze the Switch region (IGH locus) to find potential DNA insertions.
 
 The scripts are primarily intended as reference for manuscript REF_TO_PUT_HERE rather than a stand-alone application.
 
@@ -17,7 +17,7 @@ These scripts were run on Linux machines.
 
 ### LICENSES ###
 
-This code is distributed open source under the under the terms of the GNU Free Documention License.
+This code is distributed open source under the terms of the GNU Free Documention License.
 
 
 ### INSTALL ###
@@ -123,9 +123,7 @@ First we create a directory for each donor ($DONOR) and move in the raw fastq fi
         $ java -jar /pathToSwitchIlluminaScripts/CalculateInsertCoverage.jar $DONOR selectedInsert_$DONOR_Annotated_sorted.bed
 
 
-9. We add an unique insert Id to the tsv file for each insert and we create a 'selectedInsert_$DONOR_CONTIG.txt' file
-
-    that will be used to create contig sequences for each insert (used in runInsert.sh bash script).
+9. We add an unique insert Id to the tsv file for each insert and we create a 'selectedInsert_$DONOR_CONTIG.txt' file that will be used to create contig sequences for each insert (used in runInsert.sh bash script).
 
         $ java -jar /pathToSwitchIlluminaScripts/TsvAnnotatedToInsertId.jar $DONOR
 

@@ -32,7 +32,7 @@ b) Pysam https://github.com/pysam-developers/pysam
 
 c) Java JDK 8 https://docs.oracle.com/javase/8/docs/technotes/guides/install/install_overview.html#A1097144
 
-d) FastQc and Trim Galore! http://www.bioinformatics.babraham.ac.uk/projects/index.html
+d) FastQC and Trim Galore! http://www.bioinformatics.babraham.ac.uk/projects/index.html
 
 e) Burrows-Wheeler Aligner http://bio-bwa.sourceforge.net/
 

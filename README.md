@@ -90,7 +90,7 @@ and not have XA tag (multi mapping reads)
 
 
 
-   b.We filter in the regions mapped by minimum 40 reads/bp and mini length =50bp
+   b. We filter in the regions mapped by minimum 40 reads/bp and mini length =50bp
 
         $ java -jar /pathToSwitchIlluminaScripts/FindOverCoverRegion.jar $DONOR 40 50
 

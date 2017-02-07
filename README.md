@@ -139,11 +139,7 @@ First we create a directory for each donor ($DONOR) and move in the raw fastq fi
 
 11. We finally check that we have nice contig for each insert, otherwise we remove them
 
-    First we launch a blast for each insert against the switch region to discard the insert sequences
-
-    that are homologous with the switch region, and then a blast for each contig against its insert and
-
-    the switch region to keep only the contig that are Switch/Insert/Switch.
+    First we launch a blast for each insert against the switch region to discard the insert sequences that are homologous with the switch region, and then a blast for each contig against its insert and the switch region to keep only the contig that are Switch/Insert/Switch.
 
         $ /pathToSwitchIlluminaScripts/AfterTrinitySelectInsert.sh $DONOR
 

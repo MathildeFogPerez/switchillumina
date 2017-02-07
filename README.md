@@ -55,14 +55,12 @@ First we create a directory for each donor ($DONOR) and move in the raw fastq fi
 
         $ mkdir CleaningWithTrimGalore
 
-        $ trim_galore --illumina --paired -q 20 --length 99 --output_dir
-        CleaningWithTrimGalore/ raw_1.fastq raw_2.fastq
+        $ trim_galore --illumina --paired -q 20 --length 99 --output_dir CleaningWithTrimGalore/ raw_1.fastq raw_2.fastq
 
 
 2. Align the reads to the human genome hg19 (allowing soft-clipped reads)
 
-        $ bwa mem -t 10 /pathToHg19/hg19.fasta CleaningWithTrimGalore/*_val_1.fq
-        CleaningWithTrimGalore/*_val_2.fq | samtools view -bSu - > $DONOR.notSorted.bam
+        $ bwa mem -t 10 /pathToHg19/hg19.fasta CleaningWithTrimGalore/*_val_1.fq CleaningWithTrimGalore/*_val_2.fq | samtools view -bSu - > $DONOR.notSorted.bam
 
         $ samtools sort $DONOR.notSorted.bam $DONOR
 
@@ -116,8 +114,7 @@ First we create a directory for each donor ($DONOR) and move in the raw fastq fi
 
 7. We map the annotation to our inserts
 
-        $ bedmap --echo --echo-map-id-uniq --delim '\t' selectedInsert_$DONOR_merged_sorted.bed /pathToSwitchIlluminaScripts/gencode.v19.annotation.exon.gene_shortedV2.bed >
-        selectedInsert_$DONOR_Annotated.bed
+        $ bedmap --echo --echo-map-id-uniq --delim '\t' selectedInsert_$DONOR_merged_sorted.bed /pathToSwitchIlluminaScripts/gencode.v19.annotation.exon.gene_shortedV2.bed > selectedInsert_$DONOR_Annotated.bed
 
 8. We sort the final file:
 

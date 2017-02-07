@@ -6,11 +6,9 @@ email: mathilde.perez@irb.usi.ch
 
 ### SUMMARY ###
 
-We have made available here a series of scripts to analyze the Switch region (IGH locus)
+We have made available here a series of scripts to analyze the Switch region (IGH locus) and find potential DNA insertions.
 
-and find potential DNA insertions. The scripts are primarily intended as reference for manuscript
-
-REF_TO_PUT_HERE rather than a stand-alone application.
+The scripts are primarily intended as reference for manuscript REF_TO_PUT_HERE rather than a stand-alone application.
 
 The input of the pipeline is 300 bp paired-end reads coming from a target amplicon
 
@@ -82,11 +80,11 @@ First we create a directory for each donor ($DONOR) and move in the raw fastq fi
 
         $ java -jar /pathToSwitchIlluminaScripts/FindOverCoverRegion.jar $DONOR 2 50
 
-    We keep insert with chimeric reads in 3' and 5' with Switch region and at least 2 mates map in Switch region
+We keep insert with chimeric reads in 3' and 5' with Switch region and at least 2 mates map in Switch region
 
-    We discard regions >= 2000 bps (probably non specific PCR product) and we process only read where map quality >= 5
+We discard regions >= 2000 bps (probably non specific PCR product) and we process only read where map quality >= 5
 
-    and not have XA tag (multi mapping reads)
+and not have XA tag (multi mapping reads)
 
         $ python /pathToSwitchIlluminaScripts/ValidateInserts.py $DONOR.bam $DONOR 2
 
@@ -96,11 +94,11 @@ First we create a directory for each donor ($DONOR) and move in the raw fastq fi
 
         $ java -jar /pathToSwitchIlluminaScripts/FindOverCoverRegion.jar $DONOR 40 50
 
-   We keep insert with chimeric reads in 3' and 5' with Switch region and at least 2 mates map in Switch region
+We keep insert with chimeric reads in 3' and 5' with Switch region and at least 2 mates map in Switch region
 
-   We discard regions >= 2000 bps (probably non specific PCR product) and we process only read where map quality >= 5
+We discard regions >= 2000 bps (probably non specific PCR product) and we process only read where map quality >= 5
 
-   and not have XA tag (multi mapping reads)
+and not have XA tag (multi mapping reads)
 
         $ python /pathToSwitchIlluminaScripts/ValidateInserts.py $DONOR.bam $DONOR 40
 

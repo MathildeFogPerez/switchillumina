@@ -1,106 +1,166 @@
-# README #
+# Switch region PIPELINE (Illumina) #
+
+Copyright (C) 2017  Mathilde Foglierini Perez
+
+email: mathilde.perez@irb.usi.ch
+
+### SUMMARY ###
+
+We have made available here a series of scripts to analyze the Switch region (IGH locus)
+
+and find potential DNA insertions. The scripts are primarily intended as reference for manuscript
+
+REF_TO_PUT_HERE rather than a stand-alone application.
+
+The input of the pipeline is 300 bp paired-end reads coming from a target amplicon
+
+of the switch region. Data can be found at SRA_REF_TO_PUT_HERE accession number.
+
+These scripts were run on Linux machines.
 
 
-1. Trim the reads in rawData dir
->mkdir CleaningWithTrimGalore
->trim_galore --illumina --paired -q 20 --retain_unpaired --length 99 --length_1 100 --length_2 100 --output_dir ../CleaningWithTrimGalore/ IC-2295_C_208072_G_lib156878_5068_2_1.fastq IC-2295_C_208072_G_lib156878_5068_2_2.fastq &
+### LICENSES ###
 
-2.Align the reads to the human genome hg19
-Important we DO NOT USE the -M option in order to remove the PCR duplicate reads using Picard tools. This doesnt work with SA flag-> mess everything up
->bwa mem -t 10 /home/13010563@unisi.ch/bwa.kit/hg19.fasta /home/13010563@unisi.ch/KATHRIN/Illumina/C_208072_G/CleaningWithTrimGalore/*_val_1.fq /home/13010563@unisi.ch/KATHRIN/Illumina/C_208072_G/CleaningWithTrimGalore/*_val_2.fq > C_208072_G_notSorted.sam &
+This code is distributed open source under the under the terms of the GNU Free Documention License.
 
->samtools view -Sb  C_208072_G_notSorted.sam > C_208072_G_notSorted.bam
->rm C_208072_G_notSorted.sam
->samtools sort C_208072_G_notSorted.bam C_208072_G
 
->disown -h jobId
+### INSTALL ###
 
->rm C_208072_G_notSorted.bam 
+Before the pipeline can be run, the following software are required:
 
-*****Get some stats
->samtools index C_208072_G.bam
->samtools flagstat *.bam
+a) Python 2.7 https://www.python.org/download/releases/2.7/
+
+b) Pysam https://github.com/pysam-developers/pysam
+
+c) Java JDK 8 https://docs.oracle.com/javase/8/docs/technotes/guides/install/install_overview.html#A1097144
+
+d) FastQc and Trim Galore! http://www.bioinformatics.babraham.ac.uk/projects/index.html
+
+e) Burrows-Wheeler Aligner http://bio-bwa.sourceforge.net/
+
+f) samtools v1.3.1 http://samtools.sourceforge.net/
+
+g) Bedtools v2.26 http://bedtools.readthedocs.io/en/latest/index.html#
+
+h) BEDOPS v2.4.20 https://bedops.readthedocs.io/en/latest/
+
+i) Trinity v2.3.2 https://github.com/trinityrnaseq/trinityrnaseq/wiki
+
+j) BLAST+ v2.5.0 ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.5.0/
+
+### PIPELINE ###
+
+First we create a directory for each donor ($DONOR) and move in the raw fastq files.
+
+
+1. Trim the reads
+
+        $ mkdir CleaningWithTrimGalore
+
+        $ trim_galore --illumina --paired -q 20 --length 99 --output_dir
+        CleaningWithTrimGalore/ raw_1.fastq raw_2.fastq
+
+2. Align the reads to the human genome hg19 (allowing soft-clipped reads)
+
+        $ bwa mem -t 10 /pathToHg19/hg19.fasta CleaningWithTrimGalore/*_val_1.fq
+        CleaningWithTrimGalore/*_val_2.fq | samtools view -bSu - > $DONOR.notSorted.bam
+
+        $ samtools sort $DONOR.notSorted.bam $DONOR
+
+    Get some statistics
+
+        $ samtools index $DONOR.bam
+        $ samtools flagstat $DONOR.bam
 
 3. Get the "over covered" regions
->bedtools genomecov -dz -ibam C_208072_G.bam > C_208072_G_depth_v4_bedtools.txt
+
+        $ bedtools genomecov -dz -ibam $DONOR.bam > $DONOR_depth_v4_bedtools.txt
 
 4. Identify potential inserts among those over covered regions
-a.WE FILTER the regions with 2 reads/bp and mini length =50bp (java prog)
->java -jar /home/13010563@unisi.ch/SCRIPTS/switch/Illumina/FindOverCoverRegion.jar C_208072_G 2 50
-We keep insert with chimeric reads in 3' and 5' with Switch region and at least 2 mates map in Switch region (ValidateInserts.py)
-We dont process regions >= 2000 bps (probably non specific PCR product) and we process only read where map quality >= 5 and not have XA tag (multi mapping reads)
->python /home/13010563@unisi.ch/SCRIPTS/switch/Illumina/ValidateInserts.py C_208072_G.bam C_208072_G 2 &
->disown -h PID
 
-b.WE FILTER the regions with 40 reads/bp and mini length =50bp (java prog)
->java -jar /home/13010563@unisi.ch/SCRIPTS/switch/Illumina/FindOverCoverRegion.jar C_208072_G 40 50
-We keep insert with chimeric reads in 3' and 5' with Switch region and at least 2 mates map in Switch region (ValidateInserts.py)
-We dont process regions >= 2000 bps (probably non specific PCR product) and we process only read where map quality >= 5 and not have XA tag (multi mapping reads)
->python /home/13010563@unisi.ch/SCRIPTS/switch/Illumina/ValidateInserts.py C_208072_G.bam C_208072_G 40 &
->disown -h PID
+   a. We filter in the regions mapped by minimum 2 reads/bp and mini length =50bp
 
-c. We merge 1 and 2 and discard the duplicate regions when the coordinates are EXACTLY the same
->java -jar /home/13010563@unisi.ch/SCRIPTS/switch/Illumina/Merge2Beds.jar C_208072_G selectedInsert_C_208072_G_2reads.bed selectedInsert_C_208072_G_40reads.bed
+        $ java -jar /pathToSwitchIlluminaScripts/FindOverCoverRegion.jar $DONOR 2 50
 
-d. We sort the merged file (IMPORTANT: we sort with this function 'sort-bed'!!)
->sort-bed selectedInsert_C_208072_G_merged.bed > selectedInsert_C_208072_G_merged_sorted.bed
+    We keep insert with chimeric reads in 3' and 5' with Switch region and at least 2 mates map in Switch region
 
-e. We map the annotation to our inserts
->bedmap --echo --echo-map-id-uniq --delim '\t' selectedInsert_C_208072_G_merged_sorted.bed /home/13010563@unisi.ch/Homo_sapiens/hg19/gencode/gencode.v19.annotation.exon.gene_shortedV2.bed > selectedInsert_C_208072_G_Annotated.bed
+    We discard regions >= 2000 bps (probably non specific PCR product) and we process only read where map quality >= 5
 
-f. To sort the final file:
->sort -k1,1V -k2,2n selectedInsert_C_208072_G_Annotated.bed > selectedInsert_C_208072_G_Annotated_sorted.bed
+    and not have XA tag (multi mapping reads)
+
+        $ python /pathToSwitchIlluminaScripts/ValidateInserts.py $DONOR.bam $DONOR 2
 
 
-g. We create a table with all the info: insert coordinates + merge info +  gene/exon names (CalculateInsertCoverage.java)
-In bwa.kit/C_208072_G folder:
->java -jar /home/13010563@unisi.ch/SCRIPTS/switch/Illumina/CalculateInsertCoverage.jar C_208072_G selectedInsert_C_208072_G_Annotated_sorted.bed
 
---->154 inserts 
+   b.We filter in the regions mapped by minimum 40 reads/bp and mini length =50bp
 
-h. We add an unique insert Id to the tsv file for each insert and we create a 'selectedInsert_C_208072_G_CONTIG.txt' file
-that will be used to create contig sequences for each insert (using run_insert.sh bash script).
->java -jar /home/13010563@unisi.ch/SCRIPTS/switch/Illumina/TsvAnnotatedToInsertId.jar C_208072_G
+        $ java -jar /pathToSwitchIlluminaScripts/FindOverCoverRegion.jar $DONOR 40 50
 
+   We keep insert with chimeric reads in 3' and 5' with Switch region and at least 2 mates map in Switch region
 
-i.We run Trinity for each insert
->/home/13010563@unisi.ch/SCRIPTS/switch/Illumina/./runInserts.sh C_208072_G &
+   We discard regions >= 2000 bps (probably non specific PCR product) and we process only read where map quality >= 5
 
+   and not have XA tag (multi mapping reads)
 
-j.We check that we have nice contig for each insert, otherwise we remove them
-First we launch a blast for each contig against its insert and the switch region
->/home/13010563@unisi.ch/SCRIPTS/switch/Illumina/AfterTrinitySelectInsert.sh C_208072_G &
-Then we parse the blast output file
->java -jar /home/13010563@unisi.ch/SCRIPTS/switch/Illumina/KeepInsertIfContigIsSwitchInsertSwitch.jar C_208072_G
-----> 78 inserts !!!!
-
->rm -f *.insert*
+        $ python /pathToSwitchIlluminaScripts/ValidateInserts.py $DONOR.bam $DONOR 40
 
 
-This README would normally document whatever steps are necessary to get your application up and running.
+5. We merge the insert coordinates found with minimum 2 reads/bp coverage and minimum 40 reads/bp coverage.
 
-### What is this repository for? ###
+   If two insert coordinates overlap and the distance between the two is equal or below 10 bp we keep the shortest insert,
+   else we keep the longest one.
 
-* Quick summary
-* Version
-* [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
+        $ java -jar /pathToSwitchIlluminaScripts/Merge2Beds.jar $DONOR selectedInsert_$DONOR_2reads.bed selectedInsert_$DONOR_40reads.bed
 
-### How do I get set up? ###
+6. We sort the merged file
 
-* Summary of set up
-* Configuration
-* Dependencies
-* Database configuration
-* How to run tests
-* Deployment instructions
+        $ sort-bed selectedInsert_$DONOR_merged.bed > selectedInsert_$DONOR_merged_sorted.bed
 
-### Contribution guidelines ###
+7. We map the annotation to our inserts
 
-* Writing tests
-* Code review
-* Other guidelines
+        $ bedmap --echo --echo-map-id-uniq --delim '\t' selectedInsert_$DONOR_merged_sorted.bed /pathToSwitchIlluminaScripts/gencode.v19.annotation.exon.gene_shortedV2.bed >
+        selectedInsert_$DONOR_Annotated.bed
 
-### Who do I talk to? ###
+8. We sort the final file:
 
-* Repo owner or admin
-* Other community or team contact
+        $ sort -k1,1V -k2,2n selectedInsert_$DONOR_Annotated.bed > selectedInsert_$DONOR_Annotated_sorted.bed
+
+    and we create a tsv file with all the info (insert coordinates, annotation, reads coverage)
+
+        $ java -jar /pathToSwitchIlluminaScripts/CalculateInsertCoverage.jar $DONOR selectedInsert_$DONOR_Annotated_sorted.bed
+
+
+9. We add an unique insert Id to the tsv file for each insert and we create a 'selectedInsert_$DONOR_CONTIG.txt' file
+
+    that will be used to create contig sequences for each insert (used in runInsert.sh bash script).
+
+        $ java -jar /pathToSwitchIlluminaScripts/TsvAnnotatedToInsertId.jar $DONOR
+
+
+10. For each insert, we will extract the encompassing paired reads and spanning paired reads in order
+
+    to create a contig sequence using Trinity software.
+
+        $ /pathToSwitchIlluminaScripts/./runInserts.sh $DONOR
+
+
+11. We finally check that we have nice contig for each insert, otherwise we remove them
+
+    First we launch a blast for each insert against the switch region to discard the insert sequences
+
+    that are homologous with the switch region, and then a blast for each contig against its insert and
+
+    the switch region to keep only the contig that are Switch/Insert/Switch.
+
+        $ /pathToSwitchIlluminaScripts/AfterTrinitySelectInsert.sh $DONOR
+
+    Then we parse the blast output files
+
+        $ java -jar /pathToSwitchIlluminaScripts/KeepInsertIfContigIsSwitchInsertSwitch.jar $DONOR
+
+
+    Three files will be produced:
+
+    * 'selectedInsert_$DONOR_bpCoverage_annotated_forAmigo_FINAL.tsv' (can be used to add GO terms to the insert list)
+    * '$DONOR_contigs.fasta' which contains a contig for each validated insert
+    * '$DONOR_inserts_contigs.fasta' which contains the contig and the insert sequences for each validated insert

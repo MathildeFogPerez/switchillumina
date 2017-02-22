@@ -12,7 +12,7 @@ The scripts are primarily intended as reference for manuscript REF_TO_PUT_HERE r
 
 The input of the pipeline is 300 bp paired-end reads coming from a target amplicon of the switch region. Data can be found at SRA_REF_TO_PUT_HERE accession number.
 
-These scripts were run on Linux machines.
+These scripts were run on Linux machines. The general overview of the pipeline is represented in 'SuppFig_Pipeline_Illumina.pdf' file.
 
 
 ### LICENSES ###

@@ -6,7 +6,12 @@ import java.io.*;
 import java.util.ArrayList;
 
 /**
- * Created by Mathilde on 27.07.2016.
+ Copyright 2017 - Mathilde Foglierini Perez
+ This code is distributed open source under the terms of the GNU Free Documention License.
+
+ This class is used when we want to merge the 2 bed files coming from the 2 workflows: minimum reads coverage = 2 reads
+ and minimum reads coverage = 40 reads. We will remove the duplicated inserts and if 2 insert overlap and the difference
+ of overlapping is <= 10bp we keep the shortest one, otherwise we keep the longest one.
  */
 public class MergeTwoBedFilesForInsert {
     private static String donor;
@@ -138,70 +143,5 @@ public class MergeTwoBedFilesForInsert {
                 return reg1;
             }
         }
-    }
-
-
-
-    private void processRegions_OLD() {
-        for (Region reg1 : regions1) {
-            for (Region reg2 : regions2) {
-                if (reg1.getName().equals(reg2.getName())) {
-                    toDiscard.add(reg2);
-                    System.out.println("This region is duplicated " + reg2.getName());
-                } else if (reg1.getChr().equals(reg2.getChr())) {
-                    if (reg2.getStart() >= reg1.getStart() && reg2.getStart() <= reg1.getEnd()) {
-                        reg1.setDuplicate(true);
-                        reg2.setDuplicate(true);
-                    } else if (reg2.getEnd() >= reg1.getStart() && reg2.getEnd() <= reg1.getEnd()) {
-                        reg1.setDuplicate(true);
-                        reg2.setDuplicate(true);
-                    }
-                }
-            }
-        }
-
-        for (Region reg2 : regions2) {
-            if (!toDiscard.contains(reg2)) {
-                for (Region reg1 : regions1) {
-                    if (reg1.getChr().equals(reg2.getChr())) {
-                        if (reg1.getStart() >= reg2.getStart() && reg1.getStart() <= reg2.getEnd()) {
-                            reg1.setDuplicate(true);
-                            reg2.setDuplicate(true);
-                        } else if (reg1.getEnd() >= reg2.getStart() && reg1.getEnd() <= reg2.getEnd()) {
-                            reg1.setDuplicate(true);
-                            reg2.setDuplicate(true);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-
-
-    private void writeMergedFile_OLD() throws IOException {
-        File outFile = new File("selectedInsert_" + donor + "_merged.bed");
-        BufferedWriter out = new BufferedWriter(new FileWriter(outFile));
-        for (Region region : regions1) {
-            out.write(region.getChr() + "\t" + region.getStart() + "\t" + region.getEnd());
-            if (region.isDuplicate()) {
-                out.write("\t*");
-            } else {
-                out.write("\t ");
-            }
-            out.write(Consts.ls);
-        }
-        for (Region region : regions2) {
-            if (!toDiscard.contains(region)) {
-                out.write(region.getChr() + "\t" + region.getStart() + "\t" + region.getEnd());
-                if (region.isDuplicate()) {
-                    out.write("\t*");
-                } else {
-                    out.write("\t ");
-                }
-                out.write(Consts.ls);
-            }
-        }
-        out.close();
     }
 }

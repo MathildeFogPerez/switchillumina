@@ -10,17 +10,21 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 
 /**
- * Created by Mathilde on 10.11.2016. For Illumina analysis.
+ Copyright 2017 - Mathilde Foglierini Perez
+ This code is distributed open source under the terms of the GNU Free Documention License.
+
  * This class will give in output the final list of insert for each sample.
  * In input it needs:
  * - the tsv file containing all the related info for each insert : 'selectedInsert_donor_bpCoverage_annotated_forAmiGo.tsv'
- * For each insert it will BLAST the insert against each of its contig, and keep only insert:
+ * - the blast output file of the insert against the switch region
+ * -the blast output of all contig sequence against the switch region + insert sequences
+ * For each insert it will parse those  BLAST files and keep only insert if:
+ * - insert is not homologous to the switch
  * - contig contains complete sequence of insert
  * - contig has 50 bp before and after insert that map to switch region
  * The shortest contig that fulfill those criteria will be kept for further analysis.
  * In output it will create a _FINAL.tsv file with the selected inserts + a fasta file with the sequences of the contig
  * and the insert for each insert.
- * TODO could create a TSV file with the coordinates to use for the microhomology recombination analysis
  */
 public class KeepInsertIfContigIsSwitchInsertSwitch {
 
@@ -87,17 +91,19 @@ public class KeepInsertIfContigIsSwitchInsertSwitch {
             //first we check that the BLAST insert against the Switch doesnt have a HIT
             if (isInsertSequenceNotSwitch(insert)) {
                 if (keepThisInsert(insert)) {
-                    //System.out.println("After BLAST, we get nice contig for " + insert.getInsertId());
                     selectedInserts.add(insert);
                 }
             }
             else{
-                System.out.println("After BLAST with contig, we remove " + insert.getInsertId());
+                System.out.println("After BLAST parsing, we remove " + insert.getInsertId());
             }
         }
         System.out.println("Selected inserts: " + selectedInserts.size());
     }
 
+    /*
+    We parse the BLAST output of insert against Switch to discard insert homologous to the Switch
+     */
     private boolean isInsertSequenceNotSwitch(Insert insert) throws IOException {
         HashMap<String, Query> queryIdToQuery = new HashMap<>();
         File trinityDir = new File(insert.getInsertId() + "_trinity");
@@ -106,7 +112,7 @@ public class KeepInsertIfContigIsSwitchInsertSwitch {
         if (!blastOut.exists()) {
             return false;
         }
-        //check the blast output for this contig
+        //check the blast output for this insert
         SwitchBlastParser switchBlastParser = new SwitchBlastParser(blastOut);
         ArrayList<SwitchBlastParser.Alignment> alignments = switchBlastParser.getAlignments();
         for (SwitchBlastParser.Alignment align : alignments) {
@@ -119,6 +125,10 @@ public class KeepInsertIfContigIsSwitchInsertSwitch {
         return true;
     }
 
+    /*
+    This method will parse the BLAST output of all Trinity contigs (for a given insert) against the Switch region and
+    the insert consensus sequence. It returns true if we have Switch(50bp)+insert+Switch(50bp)
+     */
     private boolean keepThisInsert(Insert insert) throws IOException {
         HashMap<String,Query> queryIdToQuery = new HashMap<>();
         File trinityDir = new File(insert.getInsertId() + "_trinity");

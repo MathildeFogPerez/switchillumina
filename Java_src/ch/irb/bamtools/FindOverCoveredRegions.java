@@ -11,15 +11,20 @@ import java.util.LinkedHashMap;
 import static ch.irb.utils.Consts.fs;
 import org.apache.commons.math3.stat.descriptive.rank.Median;
 /**
- * Created by Mathilde on 29.05.2016.
+ Copyright 2017 - Mathilde Foglierini Perez
+ This code is distributed open source under the terms of the GNU Free Documention License.
+
+ This class will parse the depth file produced by bedtools genomecov and select the genomic range with a
+ minimum lenght (minLength variable) and a minimum cover (minCover variable) passed in arguments.
+ It creates a tsv and a bed file in output with the selected genomic ranges (called "over covered region").
  */
+
 public class FindOverCoveredRegions {
     private static String donor ="MGB47";
     private static int minCover = 2;
     private static int minLength =20;
-    //private String foldPath = "D:\\Users\\Mathilde\\Documents\\workspace2\\BamTools\\data"+ Consts.fs;
     private String foldPath= System.getProperty("user.dir")+Consts.fs;
-    private File depthFile = new File(foldPath+donor+"_depth_v4_bedtools.txt"); //or donor5_depth_V2.txt
+    private File depthFile = new File(foldPath+donor+"_depth_v4_bedtools.txt");
 
 
     public static void main(String[] args){
@@ -48,7 +53,6 @@ public class FindOverCoveredRegions {
         int start=-1;
         int end=-1;
         ArrayList<Double> allReadsList = new ArrayList<>();
-        double allBase=0;
         ArrayList<String> overCoveredRegion = new ArrayList<>();
         LinkedHashMap<String,Integer> regionToReads = new LinkedHashMap<>();
         HashMap<String,Double> regionToMeanReads = new HashMap<>();
@@ -57,13 +61,10 @@ public class FindOverCoveredRegions {
             String[] cells = line.split("\t");
             BigDecimal bigDec = new BigDecimal(cells[2]);
             int reads =bigDec.intValue();
-            //int reads = Integer.parseInt(cells[2]);
-            allBase++;
             allReadsList.add(new Double(reads));
             if (reads>=minCover) {
                 String chr = cells[0];
                 int coord = Integer.valueOf(cells[1]).intValue();
-               // System.out.println(chr+"\t"+coord);
                 regionToReads.put(chr+"\t"+coord,new Integer(reads));
                 if (start==-1){ //we initialize the variable
                     start= coord;
@@ -98,8 +99,8 @@ public class FindOverCoveredRegions {
                     }
                 }
             }
-           // fileReader.close();
         }
+        fileReader.close();
         //we store the last over covered region
         if (length>=minLength) {
             int startToWrite = start+1;
@@ -117,9 +118,9 @@ public class FindOverCoveredRegions {
             allReads[i]=read.doubleValue();
             i++;
         }
-        double median = new Median().evaluate(allReads);
+       // double median = new Median().evaluate(allReads);
         //double mean = allReads/allBase;
-        System.out.println("Number of total reads "+allReads+" for "+allBase+" bases, and median is "+median);
+        //System.out.println("Number of total reads "+allReads+" for "+allBase+" bases, and median is "+median);
 
         File outFile = new File(foldPath+"overCoveredRegion_"+donor+"_"+minCover+"readsCoverage.tsv");
         BufferedWriter out = new BufferedWriter(new FileWriter(outFile));
@@ -128,7 +129,6 @@ public class FindOverCoveredRegions {
         int index=1;
         for (String key: overCoveredRegion){
             out.write(index+"\t"+key);
-           // System.out.println(startRegion);
             out.write("\t"+regionToLength.get(key)+"\t"+regionToMeanReads.get(key).intValue()+Consts.ls);
             index++;
         }

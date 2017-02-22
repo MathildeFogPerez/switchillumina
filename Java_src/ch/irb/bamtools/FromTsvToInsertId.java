@@ -6,11 +6,13 @@ import java.io.*;
 import java.util.ArrayList;
 
 /**
- * Created by Mathilde on 04.11.2016.
- * This class takes in input the donor/sample name to read the tsv file (i.e.: selectedInsert_2402_G_bpCoverage_annotated.tsv)
- * produced by the pipeline and create a insert id for each insert + a column with a shorten gene id to use for AmiGO
- * It also create a txt file that contains the insert coordinates + insert id used to make the contig
- * and a bed file used to make the insert consensus sequence.
+ Copyright 2017 - Mathilde Foglierini Perez
+ This code is distributed open source under the terms of the GNU Free Documention License.
+
+ This class takes in input the donor/sample name to read the tsv file (i.e.: selectedInsert_2402_G_bpCoverage_annotated.tsv)
+ produced by the pipeline and create a insert id for each insert + a column with a shorten gene id to use for AmiGO
+ It also create a txt file that contains the insert coordinates + insert id used to make the contig
+ and a bed file used to make the insert consensus sequence.
  */
 public class FromTsvToInsertId {
 
@@ -98,7 +100,6 @@ public class FromTsvToInsertId {
         String geneId = longGeneId;
         if (longGeneId.contains(",")) {
             geneId = longGeneId.split(",")[0].trim();
-            //System.out.println("gene id with , is now "+geneId);
         }
         if (geneId.contains("_")) {
             geneId = geneId.split("_")[0];

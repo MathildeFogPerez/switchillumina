@@ -2,7 +2,7 @@
 
 Copyright (C) 2017  Mathilde Foglierini Perez / Kathrin Pieper
 
-email: mathilde.perez@irb.usi.ch kathrin.pieper@irb.usi.ch
+email: mathilde.perez@irb.usi.ch
 
 ### SUMMARY ###
 

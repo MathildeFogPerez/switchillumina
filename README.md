@@ -58,7 +58,7 @@ First we create a directory for each donor ($DONOR) and move in the raw fastq fi
 
 2. Align the reads to the human genome hg19 (allowing soft-clipped reads)
 
-        $ bwa mem -t 10 /pathToHg19/hg19.fasta CleaningWithTrimGalore/*_val_1.fq CleaningWithTrimGalore/*_val_2.fq | samtools view -bSu - > $DONOR.notSorted.bam
+        $ bwa mem -t 10 $pathToHg19/hg19.fasta CleaningWithTrimGalore/*_val_1.fq CleaningWithTrimGalore/*_val_2.fq | samtools view -bSu - > $DONOR.notSorted.bam
 
         $ samtools sort $DONOR.notSorted.bam $DONOR
 
@@ -77,24 +77,24 @@ First we create a directory for each donor ($DONOR) and move in the raw fastq fi
 
     *  We filter in the regions mapped by minimum 2 reads/bp and mini length =50bp
 
-             $ java -jar /pathToSwitchIlluminaScripts/FindOverCoverRegion.jar $DONOR 2 50
+             $ java -jar $pathToSwitchIlluminaScripts/FindOverCoverRegion.jar $DONOR 2 50
 
          We keep insert with chimeric reads in 3' and 5' with Switch region and at least 2 mates map in Switch region
 
          We discard regions >= 2000 bps (probably non specific PCR product) and we process only read where map quality >= 5  and not have XA tag (multi mapping reads)
 
-             $ python /pathToSwitchIlluminaScripts/ValidateInserts.py $DONOR.bam $DONOR 2
+             $ python $pathToSwitchIlluminaScripts/ValidateInserts.py $DONOR.bam $DONOR 2
 
 
     * We filter in the regions mapped by minimum 40 reads/bp and mini length =50bp
 
-             $ java -jar /pathToSwitchIlluminaScripts/FindOverCoverRegion.jar $DONOR 40 50
+             $ java -jar $pathToSwitchIlluminaScripts/FindOverCoverRegion.jar $DONOR 40 50
 
          We keep insert with chimeric reads in 3' and 5' with Switch region and at least 2 mates map in Switch region
 
          We discard regions >= 2000 bps (probably non specific PCR product) and we process only read where map quality >= 5  and not have XA tag (multi mapping reads)
 
-             $ python /pathToSwitchIlluminaScripts/ValidateInserts.py $DONOR.bam $DONOR 40
+             $ python $pathToSwitchIlluminaScripts/ValidateInserts.py $DONOR.bam $DONOR 40
 
 
 
@@ -103,7 +103,7 @@ First we create a directory for each donor ($DONOR) and move in the raw fastq fi
       If two insert coordinates overlap and the distance between the two is equal or below 10 bp we keep the shortest insert,
       else we keep the longest one.
 
-        $ java -jar /pathToSwitchIlluminaScripts/Merge2Beds.jar $DONOR selectedInsert_$DONOR_2reads.bed selectedInsert_$DONOR_40reads.bed
+        $ java -jar $pathToSwitchIlluminaScripts/Merge2Beds.jar $DONOR selectedInsert_$DONOR_2reads.bed selectedInsert_$DONOR_40reads.bed
 
 
 6. We sort the merged file
@@ -112,7 +112,7 @@ First we create a directory for each donor ($DONOR) and move in the raw fastq fi
 
 7. We map the annotation to our inserts
 
-        $ bedmap --echo --echo-map-id-uniq --delim '\t' selectedInsert_$DONOR_merged_sorted.bed /pathToSwitchIlluminaScripts/gencode.v19.annotation.exon.gene_shortedV2.bed > selectedInsert_$DONOR_Annotated.bed
+        $ bedmap --echo --echo-map-id-uniq --delim '\t' selectedInsert_$DONOR_merged_sorted.bed $pathToSwitchIlluminaScripts/gencode.v19.annotation.exon.gene_shortedV2.bed > selectedInsert_$DONOR_Annotated.bed
 
 8. We sort the final file:
 
@@ -120,30 +120,30 @@ First we create a directory for each donor ($DONOR) and move in the raw fastq fi
 
     and we create a tsv file with all the info (insert coordinates, annotation, reads coverage)
 
-        $ java -jar /pathToSwitchIlluminaScripts/CalculateInsertCoverage.jar $DONOR selectedInsert_$DONOR_Annotated_sorted.bed
+        $ java -jar $pathToSwitchIlluminaScripts/CalculateInsertCoverage.jar $DONOR selectedInsert_$DONOR_Annotated_sorted.bed
 
 
 9. We add an unique insert Id to the tsv file for each insert and we create a 'selectedInsert_$DONOR_CONTIG.txt' file that will be used to create contig sequences for each insert (used in runInsert.sh bash script).
 
-        $ java -jar /pathToSwitchIlluminaScripts/TsvAnnotatedToInsertId.jar $DONOR
+        $ java -jar $pathToSwitchIlluminaScripts/TsvAnnotatedToInsertId.jar $DONOR
 
 
 10. For each insert, we will extract the encompassing paired reads and spanning paired reads in order
 
     to create a contig sequence using Trinity software.
 
-        $ /pathToSwitchIlluminaScripts/./runInserts.sh $DONOR
+        $ $pathToSwitchIlluminaScripts/./runInserts.sh $DONOR
 
 
 11. We finally check that we have nice contig for each insert, otherwise we remove them
 
     First we launch a blast for each insert against the switch region to discard the insert sequences that are homologous with the switch region, and then a blast for each contig against its insert and the switch region to keep only the contig that are Switch/Insert/Switch.
 
-        $ /pathToSwitchIlluminaScripts/AfterTrinitySelectInsert.sh $DONOR
+        $ $pathToSwitchIlluminaScripts/AfterTrinitySelectInsert.sh $DONOR
 
     Then we parse the blast output files
 
-        $ java -jar /pathToSwitchIlluminaScripts/KeepInsertIfContigIsSwitchInsertSwitch.jar $DONOR
+        $ java -jar $pathToSwitchIlluminaScripts/KeepInsertIfContigIsSwitchInsertSwitch.jar $DONOR
 
 
     Three files will be produced:
